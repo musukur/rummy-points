@@ -67,6 +67,11 @@
 		var textBoxes = document.querySelectorAll('input[type=text]');
 		var cnt = 0;
 		for (var i = 0; i < textBoxes.length; i++) {
+
+			if (textBoxes[i].value<0 || textBoxes[i].value>80) {
+				alert("Invalid Points found");
+				return false;
+			}
 			if (textBoxes[i].value == 0) {
 				cnt++;
 			}
