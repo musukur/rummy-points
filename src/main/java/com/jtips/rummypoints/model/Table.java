@@ -1,5 +1,6 @@
 package com.jtips.rummypoints.model;
 
+import java.util.Date;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -9,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Transient;
 
 @Entity
 @jakarta.persistence.Table(name = "RummyTable")
@@ -20,6 +22,34 @@ public class Table {
 	private List<Player> players;
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<Round> rounds;
+	private boolean isCompleted;
+	private Date startedDate;
+	@Transient
+	private String dayName;
+
+	public String getDayName() {
+		return dayName;
+	}
+
+	public void setDayName(String dayName) {
+		this.dayName = dayName;
+	}
+
+	public Date getStartedDate() {
+		return startedDate;
+	}
+
+	public void setStartedDate(Date startedDate) {
+		this.startedDate = startedDate;
+	}
+
+	public boolean isCompleted() {
+		return isCompleted;
+	}
+
+	public void setCompleted(boolean isCompleted) {
+		this.isCompleted = isCompleted;
+	}
 
 	public int getTableId() {
 		return tableId;

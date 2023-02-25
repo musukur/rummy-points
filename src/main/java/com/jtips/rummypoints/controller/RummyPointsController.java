@@ -1,6 +1,8 @@
 package com.jtips.rummypoints.controller;
 
+import java.time.DayOfWeek;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +15,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -40,10 +41,12 @@ public class RummyPointsController {
 	public String addPlayer(@ModelAttribute("player") Player player, Model model) {
 		List<Player> players = (List<Player>) playerRepo.findAll();
 		model.addAttribute("selectedPlayers", new SelectedPlayers());
-		if (!players.contains(player))
-			playerRepo.save(player);
-		else
+		if (!players.contains(player)) {
+			player = playerRepo.save(player);
+			players.add(player);
+		} else {
 			model.addAttribute("DUPLICATE_PLAYER", "Player already present");
+		}
 		model.addAttribute("players", players);
 		return "AddPlayer";
 	}
@@ -54,6 +57,32 @@ public class RummyPointsController {
 		List<Player> players = (List<Player>) playerRepo.findAll();
 		model.addAttribute("players", players);
 		return "AddPlayer";
+	}
+
+	@GetMapping("/welcome")
+	public String welcome(Model model) {
+		List<Table> unfinishedTables = tableRepo.findByIsCompleted(false);
+		for (Table table : unfinishedTables) {
+			Date d = table.getStartedDate();
+			table.setDayName(table.getTableId() + " --> " + DayOfWeek.of(d.getDay()).name() + " : " + d.getDate() + "/"
+					+ d.getMonth() + "/" + d.getYear() + " " + d.getHours() + ":" + d.getMinutes() + ":"
+					+ d.getSeconds());
+		}
+		model.addAttribute("unfinishedTables", unfinishedTables);
+		return "Welcome";
+	}
+
+	@PostMapping("/showTable")
+	public String showTable(@RequestParam("tableId") int tableId, Model model) {
+		Table table = tableRepo.findById(tableId).get();
+		List<Player> selectedPlayersObj = table.getPlayers();
+		List<String> selectedPlayerNames = selectedPlayersObj.stream().map(a -> a.getName())
+				.collect(Collectors.toList());
+		model.addAttribute("selectedPlayerNames", selectedPlayerNames);
+		model.addAttribute("rounds", table.getRounds());
+		model.addAttribute("table", table);
+
+		return "PointsTable";
 	}
 
 	@PostMapping("/startTable")
@@ -70,6 +99,7 @@ public class RummyPointsController {
 		Table table = new Table();
 		table.setPlayers(selectedPlayersObj);
 		table.setRounds(rounds);
+		table.setStartedDate(new Date());
 		Table saved = tableRepo.save(table);
 		model.addAttribute("selectedPlayerNames", selectedPlayerNames);
 		model.addAttribute("rounds", rounds);
@@ -86,6 +116,14 @@ public class RummyPointsController {
 		model.addAttribute("rounds", t.getRounds());
 		model.addAttribute("table", t);
 		return "PointsTable";
+	}
+
+	@GetMapping("/endGame")
+	public String endGame(Model model, @RequestParam("tableId") int id) {
+		Table t = tableRepo.findById(id).get();
+		t.setCompleted(true);
+		tableRepo.save(t);
+		return welcome(model);
 	}
 
 	@PostMapping("/addPoints")

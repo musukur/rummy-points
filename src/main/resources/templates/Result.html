@@ -32,6 +32,15 @@
 				</div>
 			</div>
 		</form>
+		<form action="endGame" onsubmit="return confirmEndGame();">
+			<div class="form-group row">
+				<div class="col-sm-10">
+					<input type="hidden" name="tableId"
+						th:attr="value=${table.tableId}">
+					<button type="submit" class="btn btn-primary">End Game</button>
+				</div>
+			</div>
+		</form>
 	</div>
 </body>
 <script type="text/javascript">
@@ -42,5 +51,8 @@
 	window.onunload = function() {
 		null
 	};
+	function confirmEndGame() {
+		return confirm("Are you sure you want to end game ?")
+	}
 </script>
 </html>
