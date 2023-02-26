@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 
@@ -22,10 +23,22 @@ public class Table {
 	private List<Player> players;
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<Round> rounds;
+	@ManyToOne
+	private Admin admin;
 	private boolean isCompleted;
 	private Date startedDate;
 	@Transient
 	private String dayName;
+	
+	
+
+	public Admin getAdmin() {
+		return admin;
+	}
+
+	public void setAdmin(Admin admin) {
+		this.admin = admin;
+	}
 
 	public String getDayName() {
 		return dayName;

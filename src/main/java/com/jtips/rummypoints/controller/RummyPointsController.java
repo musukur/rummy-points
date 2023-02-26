@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.jtips.rummypoints.model.Admin;
 import com.jtips.rummypoints.model.Player;
 import com.jtips.rummypoints.model.Point;
 import com.jtips.rummypoints.model.Round;
@@ -27,6 +28,7 @@ import com.jtips.rummypoints.repo.PlayerRepository;
 import com.jtips.rummypoints.repo.TableRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class RummyPointsController {
@@ -38,10 +40,16 @@ public class RummyPointsController {
 	private TableRepository tableRepo;
 
 	@PostMapping("/addPlayer")
-	public String addPlayer(@ModelAttribute("player") Player player, Model model) {
-		List<Player> players = (List<Player>) playerRepo.findAll();
+	public String addPlayer(@ModelAttribute("player") Player player, Model model, HttpServletRequest req) {
+		HttpSession session = req.getSession(false);
+		Admin admin = (Admin) session.getAttribute("admin");
+		List<Player> players = playerRepo.findByAdmin(admin);
+		if (players == null) {
+			players = new ArrayList<>();
+		}
 		model.addAttribute("selectedPlayers", new SelectedPlayers());
 		if (!players.contains(player)) {
+			player.setAdmin(admin);
 			player = playerRepo.save(player);
 			players.add(player);
 		} else {
@@ -52,24 +60,12 @@ public class RummyPointsController {
 	}
 
 	@GetMapping("/home")
-	public String home(Model model) {
+	public String home(Model model, HttpServletRequest req) {
+		HttpSession session = req.getSession(false);
 		model.addAttribute("selectedPlayers", new SelectedPlayers());
-		List<Player> players = (List<Player>) playerRepo.findAll();
+		List<Player> players = playerRepo.findByAdmin((Admin) session.getAttribute("admin"));
 		model.addAttribute("players", players);
 		return "AddPlayer";
-	}
-
-	@GetMapping("/welcome")
-	public String welcome(Model model) {
-		List<Table> unfinishedTables = tableRepo.findByIsCompleted(false);
-		for (Table table : unfinishedTables) {
-			Date d = table.getStartedDate();
-			table.setDayName(table.getTableId() + " --> " + DayOfWeek.of(d.getDay()).name() + " : " + d.getDate() + "/"
-					+ d.getMonth() + "/" + d.getYear() + " " + d.getHours() + ":" + d.getMinutes() + ":"
-					+ d.getSeconds());
-		}
-		model.addAttribute("unfinishedTables", unfinishedTables);
-		return "Welcome";
 	}
 
 	@PostMapping("/showTable")
@@ -86,7 +82,10 @@ public class RummyPointsController {
 	}
 
 	@PostMapping("/startTable")
-	public String startTable(@ModelAttribute("selectedPlayers") SelectedPlayers selectedPlayers, Model model) {
+	public String startTable(@ModelAttribute("selectedPlayers") SelectedPlayers selectedPlayers, Model model,
+			HttpServletRequest req) {
+		HttpSession session = req.getSession(false);
+		Admin admin = (Admin) session.getAttribute("admin");
 		List<Integer> selectedPlayerIds = selectedPlayers.getSelected();
 		List<String> selectedPlayerNames = selectedPlayerIds.stream().map(a -> getName(a)).collect(Collectors.toList());
 		List<Player> selectedPlayersObj = selectedPlayerIds.stream().map(a -> {
@@ -97,6 +96,7 @@ public class RummyPointsController {
 		}).collect(Collectors.toList());
 		List<Round> rounds = new ArrayList<>();
 		Table table = new Table();
+		table.setAdmin(admin);
 		table.setPlayers(selectedPlayersObj);
 		table.setRounds(rounds);
 		table.setStartedDate(new Date());
@@ -118,13 +118,6 @@ public class RummyPointsController {
 		return "PointsTable";
 	}
 
-	@GetMapping("/endGame")
-	public String endGame(Model model, @RequestParam("tableId") int id) {
-		Table t = tableRepo.findById(id).get();
-		t.setCompleted(true);
-		tableRepo.save(t);
-		return welcome(model);
-	}
 
 	@PostMapping("/addPoints")
 	public String addPoints(HttpServletRequest req, Model model) {

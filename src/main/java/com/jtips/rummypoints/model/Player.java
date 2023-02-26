@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Player {
@@ -14,6 +15,16 @@ public class Player {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private int id;
 	private String name;
+	@ManyToOne
+	private Admin admin;
+
+	public Admin getAdmin() {
+		return admin;
+	}
+
+	public void setAdmin(Admin admin) {
+		this.admin = admin;
+	}
 
 	public int getId() {
 		return id;
